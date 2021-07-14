@@ -22,17 +22,19 @@
         img.crossOrigin = 'file';
         img.height = img.width = canvas.width = canvas.height = 600
         img.src = `b68bccd8c7f7aaa857eddef5bb33959b_b.png`
-        ctx.drawImage(img, 0, 0)
-        const imgData = ctx.getImageData(0, 0, 600, 600)
-        for(let i = 0, {data} = imgData; i < data.length; i += 4) {
-            const aver = (data[i] + data[i+1] + data[i+2]) / 3
-            data[i] = aver
-            data[i+1] = aver
-            data[i+2] = aver
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0)
+            const imgData = ctx.getImageData(0, 0, 600, 600)
+            for(let i = 0, {data} = imgData; i < data.length; i += 4) {
+                const aver = (data[i] + data[i+1] + data[i+2]) / 3
+                data[i] = aver
+                data[i+1] = aver
+                data[i+2] = aver
+            }
+            ctx.putImageData(imgData, 0, 0)
         }
-        ctx.putImageData(imgData, 0, 0)
+        
     }
-    // 问题：为什么第一次这个函数绘制的内容不会在canvas上实现呢？ 
     black()
 </script>
 </html>
