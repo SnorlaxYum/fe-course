@@ -1,18 +1,10 @@
-const fs = require('fs'), http = require('http');
+var static = require('node-static');
+var http = require('http');
 
-const requestListener = function (req, res) {
-    fs.readFile(__dirname + req.url, function (err,data) {
-      if (err) {
-        res.writeHead(404);
-        res.end(JSON.stringify(err));
-        return;
-      }
-      res.writeHead(200);
-      res.end(data);
-    });
-  }
+var file = new(static.Server)(__dirname);
 
-const server = http.createServer(requestListener);
-server.listen(8080, () => {
-    console.log(`listening at port 8080`)
+http.createServer(function (req, res) {
+  file.serve(req, res);
+}).listen(8080, () => {
+  console.log('listening on port 8080')
 });
