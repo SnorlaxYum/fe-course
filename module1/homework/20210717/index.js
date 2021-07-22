@@ -44,7 +44,7 @@ function render(template, data) {
             newChildCurrentLoc()
             return startTag
         }
-        if(/[a-z]/.exec(c)) {
+        if(/[A-Za-z]/.exec(c)) {
             currentLoc.tag += c
             return startTag
         }
@@ -147,7 +147,7 @@ function render(template, data) {
         if(c === '/') {
             return endTagStart(c)
         }
-        if(/[a-z]/.exec(c)) {
+        if(/[A-Za-z]/.exec(c)) {
             newChildCurrentLoc()
             return startTag(c)
         }
@@ -158,12 +158,12 @@ function render(template, data) {
         if(c === '/') {
             return endTagStart
         }
-        if(/[a-z]/.exec(c)) {
+        if(/[A-Za-z]/.exec(c)) {
             return endTagName(c)
         }
     }
     function endTagName(c) {
-        if(/[a-z]/.exec(c)) {
+        if(/[A-Za-z]/.exec(c)) {
             currentEndTag += c
             return endTagName
         }
@@ -215,7 +215,7 @@ function render(template, data) {
         if(c === '/') {
             return endTagStart(c)
         }
-        if(/[a-z]/.exec(c)) {
+        if(/[A-Za-z]/.exec(c)) {
             newChildCurrentLoc()
             return startTag(c)
         }
@@ -246,8 +246,8 @@ function render(template, data) {
     }
 
     function finalValue(originValue) {
-        if(/{{([ ]+|[ ])?([a-z.]+)([ ]+|[ ])?}}/.exec(originValue)) {
-            const tempVar = /{{([ ]+|[ ])?([a-z.]+)([ ]+|[ ])?}}/.exec(originValue)[2]
+        if(/{{([ ]+|[ ])?([A-Za-z.]+)([ ]+|[ ])?}}/.exec(originValue)) {
+            const tempVar = /{{([ ]+|[ ])?([A-Za-z.]+)([ ]+|[ ])?}}/.exec(originValue)[2]
             return tempVarToValue(tempVar)
         }
         return originValue
