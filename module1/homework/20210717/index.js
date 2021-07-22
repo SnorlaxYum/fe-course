@@ -224,19 +224,72 @@ function render(template, data) {
     let status = start
 
     for(let i = 0; i < template.length; i++) {
-            console.log(template[i], status.name)
-        if(typeof status !== 'function') {
-            
-            break
-        } else {
-            status = status(template[i])
-        }
+        status = status(template[i])
     }
 
-    console.log(tree)
+    function tempVarToValue(tempVar) {
+        const existDecider = tempVar.split('.')
+        if(existDecider.length === 1) {
+            return data[existDecider[0]]
+        }
+        if(existDecider.length > 1) {
+            let currentLevel = data
+            for(const level of existDecider) {
+                if(!currentLevel) {
+                    return null
+                }
+                currentLevel = currentLevel[level]
+            }
+            return currentLevel
+        }
+        return null
+    }
+
+    function finalValue(originValue) {
+        if(/{{([ ]+|[ ])?([a-z.]+)([ ]+|[ ])?}}/.exec(originValue)) {
+            const tempVar = /{{([ ]+|[ ])?([a-z.]+)([ ]+|[ ])?}}/.exec(originValue)[2]
+            return tempVarToValue(tempVar)
+        }
+        return originValue
+    }
+
+    function objToElement(obj) {
+        // bypass root
+        if(obj.tag === 'root') {
+            return obj.children.map(objToElement).filter(isTruthy => isTruthy)
+        }
+        if(obj.attributes && obj.attributes['v-if']) {
+            if(!tempVarToValue(obj.attributes['v-if'])) {
+                return null
+            }
+        }
+        if(obj.type === 'text') {
+            const text = document.createTextNode(finalValue(obj.innerText))
+            return text
+        }
+        const mainEle = document.createElement(obj.tag)
+        for(const attr in obj.attributes) {
+            mainEle.setAttribute(attr, finalValue(obj.attributes[attr]))
+        }
+        if(obj.children) {
+            for(const child of obj.children) {
+                console.log(child)
+                const childEle = objToElement(child)
+                if(childEle) {
+                    mainEle.appendChild(childEle)
+                }
+            }
+        }
+        
+        return mainEle
+    }
+
+    for(const ele of objToElement(tree)) {
+        document.getElementById('app').appendChild(ele)
+    } 
 }
  
 render(tmpl, {
-	image: "some img", 
-    info: {showImage: true, showDate:false, name: "aaa"}
+	image: "b68bccd8c7f7aaa857eddef5bb33959b_b.png", 
+    info: {showImage: true, showDate:false, name: "哈哈哈，渲染成功了！"}
 })
