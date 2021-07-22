@@ -17,8 +17,18 @@ function render(template, data) {
     }
     function newChildCurrentLoc() {
         const parentNode = currentLoc
-        currentParents.push(parentNode)
-        currentLoc = {parentNode, children: [], tag: '', attributes: {}, innerText: ''}
+        if(currentParents[currentParents.length-1] !== parentNode) {
+            currentParents.push(parentNode)
+        }
+        currentLoc = {parentNode, children: [], tag: '', attributes: {}}
+        parentNode.children.push(currentLoc)
+    }
+    function newTextChildCurrentLoc() {
+        const parentNode = currentLoc
+        if(currentParents[currentParents.length-1] !== parentNode) {
+            currentParents.push(parentNode)
+        }
+        currentLoc = {parentNode, type: 'text', innerText: ''}
         parentNode.children.push(currentLoc)
     }
     function start(c) {
@@ -26,7 +36,7 @@ function render(template, data) {
             return start
         }
         if(c === '<') {
-            return startTag('<')
+            return startTag(c)
         }
     }
     function startTag(c) {
@@ -61,7 +71,17 @@ function render(template, data) {
         }
         if(/[a-z-]/.exec(c)) {
             currentAttribute += c
+            console.log(currentAttribute)
             return startTagAttributeName
+        }
+        if(c === '=') {
+            return startTagAttributeBeforeQuote
+        }
+        if(c === '>') {
+            return afterStartTag
+        }
+        if(c === '/') {
+            return endTagEnd
         }
     }
     function startTagAttributeBeforeEqualSign(c) {
@@ -77,24 +97,26 @@ function render(template, data) {
             return startTagAttributeBeforeQuote
         }
         if(c === '"') {
+            currentLoc.attributes[currentAttribute] = ""
             return startTagAttributeValue
         }
     }
     function startTagAttributeValue(c) {
         if(c === '"') {
-            return startTagEnd
+            currentAttribute = ""
+            return startTagAttributeName
         }
         currentLoc.attributes[currentAttribute] += c
         return startTagAttributeValue
     }
-    function startTagEnd(c) {
-        if(/[\s]/.exec(c)) {
-            return startTagEnd
-        }
-        if(c === '>') {
-            return afterStartTag
-        }
-    }
+    // function startTagEnd(c) {
+    //     if(/[\s]/.exec(c)) {
+    //         return startTagEnd
+    //     }
+    //     if(c === '>') {
+    //         return afterStartTag
+    //     }
+    // }
 
     function afterStartTag(c) {
         if(/[\s]/.exec(c)) {
@@ -108,7 +130,11 @@ function render(template, data) {
 
     function currentTagInnerText(c) {
         if(c === '<') {
-            return afterStartTag
+            currentLocToParent()
+            return openStartAfterEndTag
+        }
+        if(currentLoc.tag) {
+            newTextChildCurrentLoc()
         }
         currentLoc.innerText += c
         return currentTagInnerText
@@ -119,8 +145,7 @@ function render(template, data) {
             return openStartAfterStartTag
         }
         if(c === '/') {
-            currentLocToParent()
-            return endTagStart
+            return endTagStart(c)
         }
         if(/[a-z]/.exec(c)) {
             newChildCurrentLoc()
@@ -131,8 +156,7 @@ function render(template, data) {
 
     function endTagStart(c) {
         if(c === '/') {
-            currentLocToParent()
-            return endTagName
+            return endTagStart
         }
         if(/[a-z]/.exec(c)) {
             return endTagName(c)
@@ -147,26 +171,69 @@ function render(template, data) {
             if(currentEndTag !== currentLoc.tag) {
                 throw new Error(`${currentLoc.tag} not mataching with ${currentEndTag}`)
             }
+            currentEndTag = ''
+            return endTagName
+        }
+        if(c === '>') {
+            if(currentEndTag !== currentLoc.tag) {
+                throw new Error(`${currentLoc.tag} not mataching with ${currentEndTag}`)
+            }
+            currentEndTag = ''
+            return endTagEnd(c)
         }
     }
     function endTagEnd(c) {
-        if(c === '/') {
-            currentLocToParent()
-            return endTagEnd
-        }
         if(/[\s]/.exec(c)) {
             return endTagEnd
         }
         if(c === '>') {
-            return start
+            currentLocToParent()
+            console.log(currentLoc)
+            return afterEndTag
+        }
+    }
+    function afterEndTag(c) {
+        if(/[\s]/.exec(c)) {
+            return afterEndTag
+        }
+        if(c === '<') {
+            return openStartAfterEndTag
+        }
+        newTextChildCurrentLoc()
+        return textNodeNew(c)
+    }
+
+    function textNodeNew(c) {
+        if(c === '<') {
+            return start(c)
+        }
+        currentLoc.innerText += c
+        return textNodeNew
+    }
+
+    function openStartAfterEndTag(c) {
+        if(c === '/') {
+            return endTagStart(c)
+        }
+        if(/[a-z]/.exec(c)) {
+            newChildCurrentLoc()
+            return startTag(c)
         }
     }
 
-    let status
+    let status = start
 
     for(let i = 0; i < template.length; i++) {
-        status = start(template[i])
+            console.log(template[i], status.name)
+        if(typeof status !== 'function') {
+            
+            break
+        } else {
+            status = status(template[i])
+        }
     }
+
+    console.log(tree)
 }
  
 render(tmpl, {
